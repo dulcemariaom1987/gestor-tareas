@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Tareas | Dulce María Méndez</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Fondo animado */
+        .background-circles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 140, 0, 0.08) 0%, transparent 70%);
+            animation: float 25s infinite ease-in-out;
+        }
+
+        .bg-circle:nth-child(1) {
+            width: 400px;
+            height: 400px;
+            top: -100px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+
+        .bg-circle:nth-child(2) {
+            width: 300px;
+            height: 300px;
+            bottom: -50px;
+            right: -50px;
+            animation-delay: 8s;
+        }
+
+        .bg-circle:nth-child(3) {
+            width: 250px;
+            height: 250px;
+            top: 50%;
+            left: 50%;
+            animation-delay: 15s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(50px, -80px) scale(1.1); }
+            66% { transform: translate(-30px, 50px) scale(0.9); }
+        }
+
+        /* Container principal */
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        .header h1 {
+            font-size: 42px;
+            background: linear-gradient(45deg, #ff8c00, #ff6347);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #b8b8d1;
+            font-size: 16px;
+        }
+
+        /* Card principal */
+        .task-card {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 35px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 140, 0, 0.3);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        /* Formulario de nueva tarea */
+        .task-form {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .task-input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 2px solid rgba(255, 140, 0, 0.3);
+            border-radius: 50px;
+            background: rgba(30, 30, 50, 0.6);
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .task-input:focus {
+            outline: none;
+            border-color: #ff8c00;
+            box-shadow: 0 0 20px rgba(255, 140, 0, 0.3);
+        }
+
+        .task-input::placeholder {
+            color: #888;
+        }
+
+        .add-btn {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(45deg, #ff8c00, #ff6347);
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+        }
+
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 140, 0, 0.6);
+        }
+
+        .add-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Filtros y estadísticas */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid rgba(255, 140, 0, 0.3);
+            border-radius: 50px;
+            background: rgba(30, 30, 50, 0.6);
+            color: #b8b8d1;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover {
+            border-color: #ff8c00;
+            color: #ff8c00;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(45deg, #ff8c00, #ff6347);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+        }
+
+        .task-counter {
+            color: #ff8c00;
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        /* Lista de tareas */
+        .tasks-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .tasks-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .tasks-list::-webkit-scrollbar-track {
+            background: rgba(30, 30, 50, 0.3);
+            border-radius: 10px;
+        }
+
+        .tasks-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 140, 0, 0.5);
+            border-radius: 10px;
+        }
+
+        .tasks-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 140, 0, 0.8);
+        }
+
+        /* Item de tarea */
+        .task-item {
+            background: rgba(30, 30, 50, 0.6);
+            border: 2px solid rgba(255, 140, 0, 0.2);
+            border-radius: 15px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+            animation: taskSlideIn 0.4s ease-out;
+        }
+
+        .task-item:hover {
+            border-color: #ff8c00;
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(255, 140, 0, 0.2);
+        }
+
+        .task-item.completed {
+            opacity: 0.6;
+        }
+
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        /* Checkbox personalizado */
+        .task-checkbox {
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            border: 2px solid rgba(255, 140, 0, 0.5);
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .task-checkbox:hover {
+            border-color: #ff8c00;
+            box-shadow: 0 0 10px rgba(255, 140, 0, 0.4);
+        }
+
+        .task-item.completed .task-checkbox {
+            background: linear-gradient(45deg, #ff8c00, #ff6347);
+            border-color: transparent;
+        }
+
+        .task-item.completed .task-checkbox::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* Texto de la tarea */
+        .task-text {
+            flex: 1;
+            color: #fff;
+            font-size: 16px;
+            word-break: break-word;
+        }
+
+        /* Input de edición */
+        .task-edit-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 2px solid #ff8c00;
+            border-radius: 10px;
+            background: rgba(30, 30, 50, 0.8);
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .task-edit-input:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(255, 140, 0, 0.4);
+        }
+
+        /* Botones de acción */
+        .task-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 140, 0, 0.2);
+            color: #ff8c00;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 140, 0, 0.3);
+            transform: scale(1.1);
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 99, 71, 0.3);
+            color: #ff6347;
+        }
+
+        /* Mensaje vacío */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #b8b8d1;
+        }
+
+        .empty-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-text {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .empty-subtext {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 140, 0, 0.2);
+        }
+
+        .footer-text {
+            color: #888;
+            font-size: 13px;
+        }
+
+        .footer-text span {
+            color: #ff8c00;
+            font-weight: bold;
+        }
+
+        /* Animaciones */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes taskSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 32px;
+            }
+
+            .header p {
+                font-size: 14px;
+            }
+
+            .task-card {
+                padding: 25px 20px;
+            }
+
+            .task-form {
+                flex-direction: column;
+            }
+
+            .add-btn {
+                width: 100%;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filters {
+                justify-content: center;
+            }
+
+            .filter-btn {
+                flex: 1;
+                font-size: 13px;
+                padding: 8px 12px;
+            }
+
+            .task-counter {
+                text-align: center;
+            }
+
+            .tasks-list {
+                max-height: 400px;
+            }
+
+            .task-item {
+                padding: 15px;
+            }
+
+            .task-text {
+                font-size: 15px;
+            }
+
+            .bg-circle {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 28px;
+            }
+
+            .task-card {
+                padding: 20px 15px;
+                border-radius: 20px;
+            }
+
+            .task-input {
+                padding: 14px 18px;
+                font-size: 15px;
+            }
+
+            .add-btn {
+                padding: 14px;
+                font-size: 16px;
+            }
+
+            .task-item {
+                padding: 12px 15px;
+            }
+
+            .task-text {
+                font-size: 14px;
+            }
+
+            .action-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Fondo animado -->
+    <div class="background-circles">
+        <div class="bg-circle"></div>
+        <div class="bg-circle"></div>
+        <div class="bg-circle"></div>
+    </div>
+
+    <!-- Container principal -->
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>✅ Gestor de Tareas</h1>
+            <p>Organiza tu día de manera eficiente</p>
+        </div>
+
+        <!-- Card principal -->
+        <div class="task-card">
+            <!-- Formulario para agregar tarea -->
+            <form class="task-form" id="taskForm">
+                <input 
+                    type="text" 
+                    class="task-input" 
+                    id="taskInput" 
+                    placeholder="¿Qué necesitas hacer hoy?"
+                    autocomplete="off"
+                    required
+                >
+                <button type="submit" class="add-btn">➕</button>
+            </form>
+
+            <!-- Controles (filtros y contador) -->
+            <div class="controls">
+                <div class="filters">
+                    <button class="filter-btn active" data-filter="all">Todas</button>
+                    <button class="filter-btn" data-filter="pending">Pendientes</button>
+                    <button class="filter-btn" data-filter="completed">Completadas</button>
+                </div>
+                <div class="task-counter" id="taskCounter">
+                    0 tareas pendientes
+                </div>
+            </div>
+
+            <!-- Lista de tareas -->
+            <div class="tasks-list" id="tasksList">
+                <!-- Estado vacío inicial -->
+                <div class="empty-state">
+                    <div class="empty-icon">📝</div>
+                    <p class="empty-text">No hay tareas aún</p>
+                    <p class="empty-subtext">Agrega tu primera tarea arriba</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                <p class="footer-text">
+                    Desarrollado por <span>Dulce María Méndez</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // VARIABLES GLOBALES
+        // ==========================================
+        let tasks = [];
+        let currentFilter = 'all';
+        let editingTaskId = null;
+
+        const taskForm = document.getElementById('taskForm');
+        const taskInput = document.getElementById('taskInput');
+        const tasksList = document.getElementById('tasksList');
+        const taskCounter = document.getElementById('taskCounter');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+
+        // ==========================================
+        // CARGAR TAREAS AL INICIAR
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTasksFromStorage();
+            renderTasks();
+        });
+
+        // ==========================================
+        // AGREGAR NUEVA TAREA
+        // ==========================================
+        taskForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const taskText = taskInput.value.trim();
+            if (!taskText) return;
+
+            const newTask = {
+                id: Date.now(),
+                text: taskText,
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+
+            tasks.unshift(newTask);
+            saveTasksToStorage();
+            renderTasks();
+            
+            taskInput.value = '';
+            taskInput.focus();
+        });
+
+        // ==========================================
+        // RENDERIZAR TAREAS
+        // ==========================================
+        function renderTasks() {
+            const filteredTasks = getFilteredTasks();
+
+            if (filteredTasks.length === 0) {
+                showEmptyState();
+                updateCounter();
+                return;
+            }
+
+            tasksList.innerHTML = filteredTasks.map(task => `
+                <div class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}">
+                    <div class="task-checkbox" onclick="toggleTask(${task.id})"></div>
+                    <span class="task-text" ondblclick="startEdit(${task.id})">${escapeHtml(task.text)}</span>
+                    <div class="task-actions">
+                        <button class="action-btn" onclick="startEdit(${task.id})" title="Editar">✏️</button>
+                        <button class="action-btn delete-btn" onclick="deleteTask(${task.id})" title="Eliminar">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+
+            updateCounter();
+        }
+
+        // ==========================================
+        // FILTRAR TAREAS
+        // ==========================================
+        function getFilteredTasks() {
+            switch (currentFilter) {
+                case 'pending':
+                    return tasks.filter(task => !task.completed);
+                case 'completed':
+                    return tasks.filter(task => task.completed);
+                default:
+                    return tasks;
+            }
+        }
+
+        // ==========================================
+        // CAMBIAR FILTRO
+        // ==========================================
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderTasks();
+            });
+        });
+
+        // ==========================================
+        // COMPLETAR/DESCOMPLETAR TAREA
+        // ==========================================
+        function toggleTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                saveTasksToStorage();
+                renderTasks();
+            }
+        }
+
+        // ==========================================
+        // INICIAR EDICIÓN
+        // ==========================================
+        function startEdit(id) {
+            const task = tasks.find(t => t.id === id);
+            if (!task) return;
+
+            const taskItem = document.querySelector(`[data-id="${id}"]`);
+            const textSpan = taskItem.querySelector('.task-text');
+            const actions = taskItem.querySelector('.task-actions');
+
+            textSpan.innerHTML = `<input type="text" class="task-edit-input" value="${escapeHtml(task.text)}" id="editInput-${id}">`;
+            
+            actions.innerHTML = `
+                <button class="action-btn" onclick="saveEdit(${id})" title="Guardar">💾</button>
+                <button class="action-btn" onclick="cancelEdit(${id})" title="Cancelar">❌</button>
+            `;
+
+            const input = document.getElementById(`editInput-${id}`);
+            input.focus();
+            input.select();
+
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') saveEdit(id);
+                if (e.key === 'Escape') cancelEdit(id);
+            });
+        }
+
+        // ==========================================
+        // GUARDAR EDICIÓN
+        // ==========================================
+        function saveEdit(id) {
+            const input = document.getElementById(`editInput-${id}`);
+            const newText = input.value.trim();
+
+            if (!newText) {
+                alert('La tarea no puede estar vacía');
+                return;
+            }
+
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.text = newText;
+                saveTasksToStorage();
+                renderTasks();
+            }
+        }
+
+        // ==========================================
+        // CANCELAR EDICIÓN
+        // ==========================================
+        function cancelEdit(id) {
+            renderTasks();
+        }
+
+        // ==========================================
+        // ELIMINAR TAREA
+        // ==========================================
+        function deleteTask(id) {
+            if (confirm('¿Estás seguro de eliminar esta tarea?')) {
+                tasks = tasks.filter(t => t.id !== id);
+                saveTasksToStorage();
+                renderTasks();
+            }
+        }
+
+        // ==========================================
+        // ACTUALIZAR CONTADOR
+        // ==========================================
+        function updateCounter() {
+            const pendingCount = tasks.filter(t => !t.completed).length;
+            taskCounter.textContent = `${pendingCount} ${pendingCount === 1 ? 'tarea pendiente' : 'tareas pendientes'}`;
+        }
+
+        // ==========================================
+        // MOSTRAR ESTADO VACÍO
+        // ==========================================
+        function showEmptyState() {
+            const messages = {
+                all: { icon: '📝', text: 'No hay tareas aún', subtext: 'Agrega tu primera tarea arriba' },
+                pending: { icon: '🎉', text: '¡Todo completado!', subtext: 'No tienes tareas pendientes' },
+                completed: { icon: '📋', text: 'Sin tareas completadas', subtext: 'Completa algunas tareas para verlas aquí' }
+            };
+
+            const msg = messages[currentFilter];
+            
+            tasksList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">${msg.icon}</div>
+                    <p class="empty-text">${msg.text}</p>
+                    <p class="empty-subtext">${msg.subtext}</p>
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // GUARDAR EN LOCALSTORAGE
+        // ==========================================
+        function saveTasksToStorage() {
+            const tasksData = JSON.stringify(tasks);
+            localStorage.setItem('dulce-tasks', tasksData);
+        }
+
+        // ==========================================
+        // CARGAR DE LOCALSTORAGE
+        // ==========================================
+        function loadTasksFromStorage() {
+            const storedTasks = localStorage.getItem('dulce-tasks');
+            if (storedTasks) {
+                tasks = JSON.parse(storedTasks);
+            }
+        }
+
+        // ==========================================
+        // ESCAPAR HTML (seguridad)
+        // ==========================================
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ==========================================
+        // LOG INICIAL
+        // ==========================================
+        console.log('✅ Gestor de Tareas cargado');
+        console.log('💻 Desarrollado por Dulce María Méndez Santiago');
+    </script>
+</body>
+</html>
