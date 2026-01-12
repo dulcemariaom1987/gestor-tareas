@@ -97,7 +97,7 @@ gestor-tareas/
 │
 ├── index.html
 └── README.md
-
+```
 ---
 
 
