@@ -95,11 +95,8 @@ https://dulcemariaom1987.github.io/gestor-tareas/
 ```
 gestor-tareas/
 │
-├── index.html          # Estructura principal de la aplicación
-├── styles.css          # Estilos y diseño visual
-├── script.js           # Lógica de la aplicación
-├── README.md           # Documentación del proyecto
-```
+├── index.html
+└── README.md
 
 ---
 
